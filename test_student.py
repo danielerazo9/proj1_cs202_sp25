@@ -4,6 +4,10 @@ from proj1 import *
 
 
 class TestStudentRegionFunctions(unittest.TestCase):
+    base_rect: GlobeRect
+    base_region: Region
+    base_condition: RegionCondition
+
     def setUp(self) -> None:
         self.base_rect = GlobeRect(10.0, 20.0, 30.0, 40.0)
         self.base_region = Region(self.base_rect, "Base", "other")

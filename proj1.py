@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 sys.setrecursionlimit(10**6)
 
-EARTH_RADIUS_KM = 6378.1
+EARTH_RADIUS_KM: float = 6378.1
 
 
 @dataclass(frozen=True)
@@ -82,7 +82,7 @@ cal_poly_condition = RegionCondition(
     ghg_rate=95000.0,
 )
 
-region_conditions = [
+region_conditions: List[RegionCondition] = [
     tokyo_condition,
     lagos_condition,
     pacific_patch_condition,
@@ -90,9 +90,9 @@ region_conditions = [
 ]
 
 
-# Return annual greenhouse-gas emissions per person for a region condition.
-# emissions_per_capita: RegionCondition -> float
-# Examples:
+# Purpose: Return annual greenhouse-gas emissions per person for a region condition.
+# Type: RegionCondition -> float
+# Examples/tests:
 # emissions_per_capita(RegionCondition(Region(GlobeRect(0.0, 1.0, 0.0, 1.0), "A", "other"), 2025, 100, 250.0)) == 2.5
 # emissions_per_capita(RegionCondition(Region(GlobeRect(0.0, 1.0, 0.0, 1.0), "B", "other"), 2025, 0, 250.0)) == 0.0
 def emissions_per_capita(rc: RegionCondition) -> float:
@@ -112,9 +112,9 @@ def _longitude_width_radians(west_long: float, east_long: float) -> float:
     return width
 
 
-# Return the spherical surface area of a globe rectangle in square kilometers.
-# area: GlobeRect -> float
-# Examples:
+# Purpose: Return the spherical surface area of a globe rectangle in square kilometers.
+# Type: GlobeRect -> float
+# Examples/tests:
 # area(GlobeRect(0.0, 0.0, 0.0, 10.0)) == 0.0
 # area(GlobeRect(-90.0, 90.0, -180.0, 180.0)) is approximately 4 * pi * EARTH_RADIUS_KM ** 2
 def area(gr: GlobeRect) -> float:
@@ -125,9 +125,9 @@ def area(gr: GlobeRect) -> float:
     return (EARTH_RADIUS_KM ** 2) * abs(longitude_width) * abs(latitude_height)
 
 
-# Return emissions per square kilometer for a region condition.
-# emissions_per_square_km: RegionCondition -> float
-# Examples:
+# Purpose: Return emissions per square kilometer for a region condition.
+# Type: RegionCondition -> float
+# Examples/tests:
 # emissions_per_square_km(RegionCondition(Region(GlobeRect(0.0, 1.0, 0.0, 1.0), "A", "other"), 2025, 100, 50.0)) > 0.0
 # emissions_per_square_km(RegionCondition(Region(GlobeRect(1.0, 1.0, 2.0, 2.0), "B", "other"), 2025, 100, 50.0)) == 0.0
 def emissions_per_square_km(rc: RegionCondition) -> float:
@@ -160,9 +160,9 @@ def _densest_region(rc_list: List[RegionCondition]) -> RegionCondition:
     return densest_rest
 
 
-# Return the name of the region with the greatest population density.
-# densest: List[RegionCondition] -> str
-# Examples:
+# Purpose: Return the name of the region with the greatest population density.
+# Type: List[RegionCondition] -> str
+# Examples/tests:
 # densest([]) == ""
 # densest([RegionCondition(Region(GlobeRect(0.0, 1.0, 0.0, 1.0), "A", "other"), 2025, 10, 5.0)]) == "A"
 def densest(rc_list: List[RegionCondition]) -> str:
@@ -191,9 +191,9 @@ def _compound_growth_factor(rate: float, years: int) -> float:
     return (1.0 + rate) * _compound_growth_factor(rate, years - 1)
 
 
-# Return a new region condition projected forward by a number of years.
-# project_condition: RegionCondition int -> RegionCondition
-# Examples:
+# Purpose: Return a new region condition projected forward by a number of years.
+# Type: RegionCondition, int -> RegionCondition
+# Examples/tests:
 # project_condition(RegionCondition(Region(GlobeRect(0.0, 1.0, 0.0, 1.0), "A", "other"), 2025, 1000, 500.0), 0).year == 2025
 # project_condition(RegionCondition(Region(GlobeRect(0.0, 1.0, 0.0, 1.0), "A", "other"), 2025, 1000, 500.0), 2).year == 2027
 def project_condition(rc: RegionCondition, years: int) -> RegionCondition:
