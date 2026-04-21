@@ -206,9 +206,14 @@ def project_condition(rc: RegionCondition, years: int) -> RegionCondition:
         )
     growth_rate = _terrain_growth_rate(rc.region.terrain)
     growth_factor = _compound_growth_factor(growth_rate, years)
+    projected_pop = int(rc.pop * growth_factor)
+    if rc.pop <= 0:
+        projected_ghg_rate = 0.0
+    else:
+        projected_ghg_rate = rc.ghg_rate * (projected_pop / rc.pop)
     return RegionCondition(
         region=rc.region,
         year=rc.year + years,
-        pop=int(rc.pop * growth_factor),
-        ghg_rate=rc.ghg_rate * growth_factor,
+        pop=projected_pop,
+        ghg_rate=projected_ghg_rate,
     )

@@ -31,6 +31,10 @@ class TestStudentRegionFunctions(unittest.TestCase):
         zero_pop_condition = RegionCondition(self.base_region, 2025, 0, 2500.0)
         self.assertEqual(emissions_per_capita(zero_pop_condition), 0.0)
 
+    def test_emissions_per_capita_negative_population(self) -> None:
+        negative_pop_condition = RegionCondition(self.base_region, 2025, -50, 2500.0)
+        self.assertEqual(emissions_per_capita(negative_pop_condition), 0.0)
+
     def test_area_matches_full_sphere_for_whole_globe(self) -> None:
         whole_globe = GlobeRect(-90.0, 90.0, -180.0, 180.0)
         expected = 4.0 * math.pi * (EARTH_RADIUS_KM ** 2)
@@ -44,6 +48,11 @@ class TestStudentRegionFunctions(unittest.TestCase):
             * (math.sin(math.radians(20.0)) - math.sin(math.radians(10.0)))
         )
         self.assertAlmostEqual(area(wrapped_rect), expected, places=5)
+
+    def test_area_is_same_when_latitudes_are_reversed(self) -> None:
+        normal_rect = GlobeRect(10.0, 20.0, 30.0, 40.0)
+        reversed_rect = GlobeRect(20.0, 10.0, 30.0, 40.0)
+        self.assertAlmostEqual(area(normal_rect), area(reversed_rect), places=7)
 
     def test_emissions_per_square_km_zero_area(self) -> None:
         point_rect = GlobeRect(35.0, 35.0, -120.0, -120.0)
@@ -73,12 +82,17 @@ class TestStudentRegionFunctions(unittest.TestCase):
     def test_densest_empty_list_returns_empty_string(self) -> None:
         self.assertEqual(densest([]), "")
 
+    def test_densest_prefers_zero_area_positive_population(self) -> None:
+        point_region = Region(GlobeRect(1.0, 1.0, 2.0, 2.0), "Point City", "other")
+        point_condition = RegionCondition(point_region, 2025, 10, 1.0)
+        self.assertEqual(densest([self.base_condition, point_condition]), "Point City")
+
     def test_project_condition_uses_other_growth_rate(self) -> None:
         projected = project_condition(self.base_condition, 10)
-        growth_factor = (1.0003) ** 10
+        projected_pop = int(1000 * ((1.0003) ** 10))
         self.assertEqual(projected.year, 2035)
-        self.assertEqual(projected.pop, int(1000 * growth_factor))
-        self.assertAlmostEqual(projected.ghg_rate, 2500.0 * growth_factor, places=7)
+        self.assertEqual(projected.pop, projected_pop)
+        self.assertAlmostEqual(projected.ghg_rate, 2500.0 * (projected_pop / 1000), places=7)
         self.assertEqual(projected.region, self.base_region)
         self.assertEqual(self.base_condition.year, 2025)
         self.assertEqual(self.base_condition.pop, 1000)
@@ -92,9 +106,29 @@ class TestStudentRegionFunctions(unittest.TestCase):
         forest_region = Region(self.base_rect, "Forest", "forest")
         forest_condition = RegionCondition(forest_region, 2025, 500000, 1000000.0)
         projected = project_condition(forest_condition, 3)
-        growth_factor = (0.99999) ** 3
-        self.assertEqual(projected.pop, int(500000 * growth_factor))
-        self.assertAlmostEqual(projected.ghg_rate, 1000000.0 * growth_factor, places=7)
+        projected_pop = int(500000 * ((0.99999) ** 3))
+        self.assertEqual(projected.pop, projected_pop)
+        self.assertAlmostEqual(projected.ghg_rate, 1000000.0 * (projected_pop / 500000), places=7)
+
+    def test_project_condition_handles_mountains_growth(self) -> None:
+        mountain_region = Region(self.base_rect, "Mountain", "mountains")
+        mountain_condition = RegionCondition(mountain_region, 2025, 4000, 8000.0)
+        projected = project_condition(mountain_condition, 4)
+        projected_pop = int(4000 * ((1.0005) ** 4))
+        self.assertEqual(projected.pop, projected_pop)
+        self.assertAlmostEqual(projected.ghg_rate, 8000.0 * (projected_pop / 4000), places=7)
+
+    def test_project_condition_zero_population_sets_zero_emissions(self) -> None:
+        zero_pop_condition = RegionCondition(self.base_region, 2025, 0, 2500.0)
+        projected = project_condition(zero_pop_condition, 5)
+        self.assertEqual(projected.pop, 0)
+        self.assertEqual(projected.ghg_rate, 0.0)
+
+    def test_project_condition_negative_years_keeps_population_and_emissions(self) -> None:
+        projected = project_condition(self.base_condition, -2)
+        self.assertEqual(projected.year, 2023)
+        self.assertEqual(projected.pop, self.base_condition.pop)
+        self.assertEqual(projected.ghg_rate, self.base_condition.ghg_rate)
 
 
 if __name__ == "__main__":
